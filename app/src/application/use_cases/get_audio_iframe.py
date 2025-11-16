@@ -9,25 +9,25 @@ from src.application.responses import (
     validResponse,
     RES_GetIframe,
 )
-from src.application.utils.utils import format_url_youtube, verify_domain
+from src.application.utils.utils import utils
 from core.logger import logger
 from core.settings import settings
 
 
 class UC_GetAudioIframe:
 
-    def __init__(self, url: str, platform: AllPlatforms):
+    def __init__(self, url: str, platform: str):
         self.url = url
         self.platform = platform
 
     async def execute(self) -> Respuesta:
         try:
-            result = verify_domain(self.url, self.platform.value)
+            result = utils.verify_domain(self.url, self.platform)
             if not result:
                 return errorResponse("La url no es válida")
 
-            if self.platform == AllPlatforms.YOUTUBE:
-                self.url = format_url_youtube(self.url)
+            if self.platform == AllPlatforms.YOUTUBE.value:
+                self.url = utils.format_url_youtube(self.url)
 
             result = requests.get(settings.API_IFRAME, params={"url": self.url})
 
@@ -38,9 +38,9 @@ class UC_GetAudioIframe:
             code = result.json().get("code", "")
 
             # Escoger patrón según plataforma
-            if self.platform == AllPlatforms.SOUNDCLOUD:
+            if self.platform == AllPlatforms.SOUNDCLOUD.value:
                 pattern = r'src="(https://(?:w{1,3}\.)?soundcloud\.com/player/[^"]+)"'
-            elif self.platform == AllPlatforms.YOUTUBE:
+            elif self.platform == AllPlatforms.YOUTUBE.value:
                 pattern = (
                     r'src="(https://(?:www\.)?youtube\.com/embed/[^"?]+(?:\?[^"]*)?)"'
                 )
@@ -49,7 +49,7 @@ class UC_GetAudioIframe:
 
             if match:
                 src_url = match.group(1)
-                if self.platform == AllPlatforms.SOUNDCLOUD:
+                if self.platform == AllPlatforms.SOUNDCLOUD.value:
                     src_url += "&show_comments=false"
 
                 return validResponse(RES_GetIframe(url=src_url))
