@@ -23,9 +23,11 @@ def validResponse(data):
 
 
 class RES_FileResponse(BaseModel):
-    title: str
+    folder_name: str
+    file_path: str
+    file_name: str
     extension: str
-    base64: str
+    media_type: str
 
 
 class RES_GetIframe(BaseModel):

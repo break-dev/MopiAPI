@@ -1,5 +1,6 @@
 from typing import Tuple, List
 from pathlib import Path
+import mimetypes
 import re
 import shutil
 import uuid
@@ -50,16 +51,17 @@ class Utils:
             return ""
 
     def find_file_temp(
-        self, folder_path: str, allowed_exts: List[str]
-    ) -> Tuple[str, str, str]:
+        self, folder_path: str, allowed_exts: List[str] | None = None
+    ) -> Tuple[str, str, str, str]:
         """
         Busca un archivo dentro del directorio y filtra por extensiones permitidas.
         Devuelve:
-            (file_path, filename_sin_extension, extension)
+            (file_path, file_name, extension, media_type)
         """
         file_path = ""
         file_name = ""
         extension = ""
+        media_type = ""
         try:
             folder = Path(folder_path)
             if not folder.exists() or not folder.is_dir():
@@ -69,15 +71,17 @@ class Utils:
                 if item.is_file():
                     ext = item.suffix.lower().replace(".", "")
 
-                    if ext not in allowed_exts:
+                    if allowed_exts and ext not in allowed_exts:
                         continue  # descartar archivos basura
 
                     file_path = str(item.resolve())
                     file_name = item.stem
                     extension = ext
+                    media_type, _ = mimetypes.guess_type(file_path)
+                    break
 
         finally:
-            return file_path, file_name, extension
+            return file_path, file_name, extension, media_type if media_type else ""
 
     def find_file_path(self, file_name: str) -> str:
         """Busca un archivo en el directorio actual y sus padres."""
@@ -138,6 +142,3 @@ class Utils:
         path = Path(file_path)
         with path.open("rb") as f:
             return base64.b64encode(f.read()).decode("utf-8")
-
-
-utils = Utils()

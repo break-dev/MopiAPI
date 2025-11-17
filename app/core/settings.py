@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 from dotenv import load_dotenv, find_dotenv
 
 #
-from src.application.utils.utils import utils
+from src.application.utils.utils import Utils
 
 env_path = find_dotenv()
 if env_path:
@@ -20,8 +20,8 @@ class Settings(BaseSettings):
     APP_CLIENT: str = os.getenv("APP_CLIENT", "")
     API_IFRAME: str = os.getenv("API_IFRAME", "")
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "")
-    COOKIES_FILE_PATH: str = utils.find_file_path("cookies.txt")
-    DOWNLOAD_DIR_PATH: str = utils.find_folder_path("downloads")
+    COOKIES_FILE_PATH: str = Utils().find_file_path("cookies.txt")
+    DOWNLOAD_DIR_PATH: str = Utils().find_folder_path("downloads")
 
     def validate(self):
         """Verifica que las rutas y variables críticas estén configuradas correctamente."""

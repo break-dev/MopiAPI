@@ -15,6 +15,11 @@ class DTO_GetAudioIframe(BaseModel):
     platform: AudioPlatforms = AudioPlatforms.YOUTUBE
 
 
+class DTO_GetVideoIframe(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+    platform: VideoPlatforms = VideoPlatforms.YOUTUBE
+
+
 class DTO_AudioDownload(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
     title: Optional[str] = Field(None, min_length=1, max_length=64)

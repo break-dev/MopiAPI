@@ -6,7 +6,7 @@ import os
 #
 from core.logger import logger
 from core.settings import settings
-from src.application.utils.utils import utils
+from src.application.utils.utils import Utils
 from src.domain.enums import AudioCodecs
 
 
@@ -85,6 +85,11 @@ class DLP:
             # Cookies: obligatorio para videos con restricciones regionales
             #
             "cookiefile": settings.COOKIES_FILE_PATH,
+            "paths": {
+                "home": settings.DOWNLOAD_DIR_PATH,
+                "temp": settings.DOWNLOAD_DIR_PATH,
+            },
+            "cachedir": settings.DOWNLOAD_DIR_PATH,
         }
 
     def get_opts_for_download_video(self, folder_path: str, codec: str) -> dict:
@@ -117,6 +122,11 @@ class DLP:
             "socket_timeout": 20,
             "retries": 3,
             "fragment_retries": 10,
+            "paths": {
+                "home": settings.DOWNLOAD_DIR_PATH,
+                "temp": settings.DOWNLOAD_DIR_PATH,
+            },
+            "cachedir": settings.DOWNLOAD_DIR_PATH,
         }
 
     def verify_duration(self, url: str, duration_limits: dict, quality: str) -> str:
@@ -151,14 +161,15 @@ class DLP:
         url: str,
         folder_path: str,
         file_type: Literal["audio", "video"],
-        allowed_exts: List[str],
         codec: str,
         quality: str,
-    ) -> Tuple[str, str, str]:
-        """(success, (file_path, filename_sin_extension, extension)"""
+        allowed_exts: List[str] | None = None,
+    ) -> Tuple[str, str, str, str]:
+        """(file_path, file_name, extension, media_type)"""
         file_path = ""
         file_name = ""
         extension = ""
+        media_type = ""
         try:
             if file_type == "audio":
                 with yt_dlp.YoutubeDL(self.get_opts_for_download_audio(folder_path=folder_path, codec=codec, quality=quality)) as ydl:  # type: ignore
@@ -170,17 +181,14 @@ class DLP:
                 raise Exception("Tipo de archivo no válido")
 
             # verificar si se creo el archivo
-            result = utils.find_file_temp(folder_path, allowed_exts)
-            if not result[0] or not result[1] or not result[2]:
-                utils.delete_temp_folder(Path(folder_path).name)
+            result = Utils().find_file_temp(folder_path, allowed_exts)
+            if not result[0] or not result[1] or not result[2] or not result[3]:
+                Utils().delete_temp_folder(Path(folder_path).name)
                 raise Exception("Archivo no encontrado después de la descarga.")
 
-            file_path, file_name, extension = result
+            file_path, file_name, extension, media_type = result
 
         except Exception as e:
             logger.exception(f"Error en download: {e}")
         finally:
-            return file_path, file_name, extension
-
-
-dlp = DLP()
+            return file_path, file_name, extension, media_type

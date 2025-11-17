@@ -1,5 +1,7 @@
 import re
 import requests
+from typing import Literal
+import httpx
 
 #
 from src.domain.enums import AllPlatforms
@@ -9,35 +11,49 @@ from src.application.responses import (
     validResponse,
     RES_GetIframe,
 )
-from src.application.utils.utils import utils
+from src.application.utils.utils import Utils
 from core.logger import logger
 from core.settings import settings
 
 
-class UC_GetAudioIframe:
+class UC_GetIframe:
 
-    def __init__(self, url: str, platform: str):
+    def __init__(
+        self,
+        url: str,
+        platform: str,
+        file_type: Literal["audio", "video"],
+    ):
         self.url = url
         self.platform = platform
+        self.file_type: Literal["audio", "video"] = file_type
 
     async def execute(self) -> Respuesta:
         try:
-            result = utils.verify_domain(self.url, self.platform)
+            # verificar dominio
+            result = Utils().verify_domain(self.url, self.platform)
             if not result:
                 return errorResponse("La url no es válida")
 
             if self.platform == AllPlatforms.YOUTUBE.value:
-                self.url = utils.format_url_youtube(self.url)
+                self.url = Utils().format_url_youtube(self.url)
 
-            result = requests.get(settings.API_IFRAME, params={"url": self.url})
-
+            # consultamos a la api de iframes
+            async with httpx.AsyncClient() as client:
+                result = await client.get(settings.API_IFRAME, params={"url": self.url})
             if result.status_code != 200:
                 logger.error(f"Error al contactar con la API: {settings.API_IFRAME}")
                 return errorResponse()
 
+            # buscamos el url del iframe
             code = result.json().get("code", "")
 
-            # Escoger patrón según plataforma
+            if not code:
+                logger.error(
+                    f"No se encontró el campo CODE para {self.platform}: {self.url}"
+                )
+                return errorResponse()
+
             if self.platform == AllPlatforms.SOUNDCLOUD.value:
                 pattern = r'src="(https://(?:w{1,3}\.)?soundcloud\.com/player/[^"]+)"'
             elif self.platform == AllPlatforms.YOUTUBE.value:

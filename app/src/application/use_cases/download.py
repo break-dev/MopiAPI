@@ -1,12 +1,9 @@
 import re
 from typing import Optional, Literal
 from pathlib import Path
-from concurrent.futures import ThreadPoolExecutor
-import asyncio
 
 #
 from core.settings import settings
-from core.logger import logger
 from src.domain.enums import AllPlatforms
 from src.application.responses import (
     validResponse,
@@ -14,12 +11,9 @@ from src.application.responses import (
     Respuesta,
     RES_FileResponse,
 )
-from src.infraestructure.dlp import dlp
-from src.application.utils.utils import utils
+from src.infraestructure.dlp import DLP
+from src.application.utils.utils import Utils
 from src.domain.enums import AudioCodecs, VideoCodecs
-
-
-executor = ThreadPoolExecutor(max_workers=5)
 
 
 class UC_Download:
@@ -61,6 +55,7 @@ class UC_Download:
         self.file_path: str = ""  # path completo: folder + filename.ext
         self.file_name: str = ""  # nombre del archivo
         self.extension: str = ""  # extension del archivo
+        self.media_type: str = ""  # tipo de archivo
 
     def verify_title(self) -> bool:
         """Valida que el título sea aceptable (sin caracteres prohibidos y con longitud <= 64)."""
@@ -82,12 +77,12 @@ class UC_Download:
                 return "El título no es válido"
 
         # verificar si el dominio de la url coincide con la plataforma indicada
-        result = utils.verify_domain(self.url, self.platform)
+        result = Utils().verify_domain(self.url, self.platform)
         if not result:
             return "La url no es válida"
 
         if self.platform == AllPlatforms.YOUTUBE.value:
-            result = utils.format_url_youtube(self.url)
+            result = Utils().format_url_youtube(self.url)
             if not result:
                 return "La url no es válida"
             self.url = result
@@ -97,29 +92,34 @@ class UC_Download:
             return ""
 
         # verificar si la duracion es valida
-        result = dlp.verify_duration(self.url, self.duration_limits, self.quality)
+        result = DLP().verify_duration(self.url, self.duration_limits, self.quality)
         if result:
             return result
 
         return ""
 
     def download(self) -> bool:
-        self.folder_path = utils.create_temp_folder()
+        self.folder_path = Utils().create_temp_folder()
 
-        self.file_path, self.file_name, self.extension = dlp.download(
+        (
+            self.file_path,
+            self.file_name,
+            self.extension,
+            self.media_type,
+        ) = DLP().download(
             url=self.url,
             folder_path=self.folder_path,
             file_type=self.file_type,
-            allowed_exts=[self.codec],
             codec=self.codec,
             quality=self.quality,
+            # allowed_exts=[self.codec],
         )
 
         if not self.file_path:
             return False
         return True
 
-    def execute(self) -> Respuesta:
+    async def execute(self) -> Respuesta:
         # verificar los datos de entrada
         result = self.verify_all()
         if result:
@@ -129,24 +129,12 @@ class UC_Download:
         if not self.download():
             return errorResponse()
 
-        base64 = utils.to_base64(self.file_path)
-        utils.delete_temp_folder(Path(self.folder_path).name)  # borramos la carpeta
-
         return validResponse(
             RES_FileResponse(
-                title=self.title if self.title else self.file_name,
+                folder_name=Path(self.folder_path).name,
+                file_name=self.title if self.title else self.file_name,
+                file_path=self.file_path,
                 extension=self.extension,
-                base64=base64,
+                media_type=self.media_type,
             )
         )
-
-    def safe_execute(self) -> Respuesta:
-        try:
-            return self.execute()
-        except Exception as e:
-            logger.exception(e)
-            return errorResponse()
-
-    async def execute_parallel(self) -> Respuesta:
-        loop = asyncio.get_running_loop()
-        return await loop.run_in_executor(executor, self.safe_execute)

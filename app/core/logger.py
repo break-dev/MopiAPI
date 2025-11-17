@@ -1,7 +1,7 @@
 import logging
 
 #
-from src.application.utils.utils import utils
+from src.application.utils.utils import Utils
 
 # Logger
 logger = logging.getLogger("mopi")
@@ -17,7 +17,7 @@ if not logger.handlers:
     logger.addHandler(stream_h)
 
     # File handler opcional
-    file_h = logging.FileHandler(utils.find_file_path("bitacora.log"))
+    file_h = logging.FileHandler(Utils().find_file_path("bitacora.log"))
     file_h.setFormatter(
         logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     )
