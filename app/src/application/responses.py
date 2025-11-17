@@ -1,7 +1,6 @@
 from pydantic.generics import GenericModel
 from pydantic import BaseModel
 from typing import TypeVar, Generic, Optional, Union, List, Dict, Any
-from fastapi.responses import FileResponse
 
 T = TypeVar("T")
 
@@ -26,7 +25,7 @@ def validResponse(data):
 class RES_FileResponse(BaseModel):
     title: str
     extension: str
-    file: FileResponse
+    base64: str
 
 
 class RES_GetIframe(BaseModel):

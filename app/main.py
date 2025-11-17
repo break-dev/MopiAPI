@@ -1,11 +1,21 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 #
 from core.settings import settings
 from src.presentation.filter_exception import filter_exception
-from src.presentation.routes import router
+from src.application.responses import Respuesta
+from src.application.use_cases.get_audio_iframe import UC_GetAudioIframe
+from src.application.use_cases.download_audio import UC_AudioDownload
+from src.presentation.dtos import (
+    DTO_GetAudioIframe,
+    DTO_AudioDownload,
+    DTO_VideoDownload,
+)
+from src.application.use_cases.download_video import UC_VideoDownload
 
 
 # fastapi dev app/main.py
@@ -13,12 +23,15 @@ from src.presentation.routes import router
 # cd app
 # fastapi dev main.py
 
-
 app = FastAPI(
     title=settings.APP_NAME,
     description=settings.APP_DESCRIPTION,
     version=settings.APP_VERSION,
 )
+
+# rate limit
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
 
 
 # Registrar el filtro global de excepciones
@@ -43,9 +56,38 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ------- ENDPOINTS ------------
 
-# Incluir otros endpoint
-app.include_router(router)
+
+@app.post("/get_audio_iframe/")
+@limiter.limit("10/minute")
+async def get_audio_iframe(dto: DTO_GetAudioIframe, request: Request) -> Respuesta:
+    result = await UC_GetAudioIframe(url=dto.url, platform=dto.platform.value).execute()
+    return result
+
+
+@app.post("/download_audio/")
+@limiter.limit("4/minute")
+async def download_audio(dto: DTO_AudioDownload, request: Request):
+    result = await UC_AudioDownload(
+        url=dto.url,
+        title=dto.title,
+        platform=dto.platform.value,
+        quality=dto.quality.value,
+    ).execute_parallel()
+    return result
+
+
+@app.post("/download_video/")
+@limiter.limit("4/minute")
+async def download_video(dto: DTO_VideoDownload, request: Request):
+    result = await UC_VideoDownload(
+        url=dto.url,
+        title=dto.title,
+        platform=dto.platform.value,
+        quality=dto.quality.value,
+    ).execute_parallel()
+    return result
 
 
 # run run
