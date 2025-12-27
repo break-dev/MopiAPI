@@ -1,101 +1,170 @@
-# 💻 Backend de MOPI
+# Backend de MOPI
 
------
+## Desarrollo Local (sin Docker)
 
-## 🐍 Desarrollo en Entorno Local (Windows) 🖥️
+Si necesitas trabajar con el proyecto sin usar Docker, es **vital** gestionar las dependencias directamente con `pip` y un entorno virtual.
 
-Si necesitas trabajar con el proyecto sin usar Docker, es vital gestionar las dependencias directamente con `pip` y un entorno virtual.
+---
 
-### Pre-requisitos
+## Pre-requisitos
 
-Antes de comenzar, debes tener instalado **FFmpeg** en tu sistema.
+Antes de comenzar, debes tener instalado:
+
+- **Python 3.10+**
+- **FFmpeg** (obligatorio para el procesamiento multimedia)
+
+### Instalación de FFmpeg
+
+- **Windows:** usar binarios oficiales o `choco install ffmpeg`
+- **macOS (Homebrew):**
+  ```bash
+  brew install ffmpeg
+  ```
+- **Linux (Debian/Ubuntu):**
+  ```bash
+  sudo apt install ffmpeg
+  ```
+
+### Archivos Requeridos
+
+Crea estos archivos en la carpeta `app/`:
+
+1. **`.env`** - Variables de entorno
+2. **`cookies.txt`** - Para procesar videos de YouTube
+3. **`bitacora.log`** - Archivo de logs
+
+> **IMPORTANTE:** El archivo `.env` NO debe versionarse.
+
+---
+
+## Desarrollo en Windows
+
+Abre una terminal (**PowerShell** o **CMD**) en el directorio raíz del proyecto.
 
 ### Gestión de Dependencias
 
-Abre una terminal (**PowerShell** o **CMD**) en el directorio raíz del proyecto para configurar el entorno virtual y las dependencias.
+| Tarea                     | Comando                               | Descripción                        |
+| ------------------------- | ------------------------------------- | ---------------------------------- |
+| **Crear Entorno**         | `python -m venv .venv`                | Crea el entorno virtual `.venv`    |
+| **Activar Entorno**       | `.\.venv\Scripts\activate`            | Activa el entorno virtual          |
+| **Actualizar pip**        | `python -m pip install --upgrade pip` | Actualiza el gestor de paquetes    |
+| **Instalar Dependencias** | `pip install -r requirements.txt`     | Instala las librerías del proyecto |
+| **Desactivar Entorno**    | `deactivate`                          | Sale del entorno virtual           |
 
-| Tarea | Comando (PowerShell/CMD) | Descripción |
-| :--- | :--- | :--- |
-| **Crear Entorno** | `python -m venv .venv` | Crea un nuevo entorno virtual llamado `.venv`. |
-| **Activar Entorno** | `.\.venv\Scripts\activate` | Activa el entorno. Verás `(.venv)` en el *prompt* de tu terminal. |
-| **Instalar Dependencias** | `pip install -r requirements.txt` | Instala todas las librerías listadas en el archivo. |
-| **Desactivar Entorno** | `deactivate` | Sale del entorno virtual, volviendo al entorno global. |
+### Mantenimiento
 
-### Mantenimiento y Actualización de Dependencias
+- **Actualizar pip:**
 
-Mantener tu entorno virtual al día es crucial para la consistencia del desarrollo.
+  ```bash
+  python -m pip install --upgrade pip
+  ```
 
-  * **Actualizar PIP:** Asegúrate de que tu gestor de paquetes esté al día.
+- **Actualizar `requirements.txt`:**
+  ```bash
+  pip freeze > requirements.txt
+  ```
 
-    ```bash
-    python -m pip install --upgrade pip
-    ```
+### Limpieza de caché Python
 
-  * **Sincronizar `requirements.txt`:** Después de cualquier instalación o actualización de dependencias, debes reflejar los cambios en el archivo.
-
-    ```bash
-    pip freeze > requirements.txt
-    ```
-
-el archivo .env debe ir dentro de la carpeta app
-
-ejecutar
-fastapi dev main.py
-
-# Borrar carpetas __pycache__ (usando powershell)
+```powershell
 Get-ChildItem -Path . -Include __pycache__ -Recurse -Directory | Remove-Item -Recurse -Force
------
+```
 
-## 🐳 Configuración y Uso con Docker
+---
 
-El servicio se levanta usando el archivo `docker-compose.yml` que ya se encuentra en el proyecto.
+## Desarrollo en macOS / Linux
 
-### API
+Abre **Terminal** en el directorio raíz del proyecto.
 
-Para levantar el servicio de la API, asegúrate de que las líneas relacionadas con servicios de caché o externos no necesarios estén comentadas en el `docker-compose.yml`.
+### Gestión de Dependencias
 
-Para iniciar el servicio, ejecuta el siguiente comando en el directorio raíz del proyecto:
+| Tarea                     | Comando                                | Descripción                        |
+| ------------------------- | -------------------------------------- | ---------------------------------- |
+| **Crear Entorno**         | `python3 -m venv .venv`                | Crea el entorno virtual `.venv`    |
+| **Activar Entorno**       | `source .venv/bin/activate`            | Activa el entorno virtual          |
+| **Actualizar pip**        | `python3 -m pip install --upgrade pip` | Actualiza el gestor de paquetes    |
+| **Instalar Dependencias** | `pip install -r requirements.txt`      | Instala las librerías del proyecto |
+| **Desactivar Entorno**    | `deactivate`                           | Sale del entorno virtual           |
+
+### Mantenimiento
+
+- **Actualizar pip:**
+
+  ```bash
+  python3 -m pip install --upgrade pip
+  ```
+
+- **Actualizar `requirements.txt`:**
+  ```bash
+  pip freeze > requirements.txt
+  ```
+
+### Limpieza de caché Python
+
+```bash
+find . -type d -name "__pycache__" -exec rm -rf {} +
+```
+
+---
+
+## Ejecución del Backend
+
+Con el entorno virtual activado:
+
+```bash
+fastapi dev app/main.py
+```
+
+El backend quedará disponible en:
+
+- **API:** [http://localhost:8000](http://localhost:8000)
+- **Documentación:** [http://localhost:8000/docs](http://localhost:8000/docs)
+
+---
+
+## Configuración y Uso con Docker
+
+El servicio se levanta usando el archivo `docker-compose.yml` del proyecto.
+
+### Inicio del Servicio
 
 ```bash
 docker compose up -d
 ```
 
-> **Nota:** La bandera `-d` (**detached**) permite que los contenedores se ejecuten en segundo plano, liberando tu terminal.
+> La bandera `-d` ejecuta los contenedores en segundo plano.
 
-Para verificar que los contenedores estén corriendo, usa:
+Verifica que esté activo:
 
 ```bash
 docker ps
 ```
 
-Deberías ver el contenedor principal, nombrado `cont-apimopi`.
+Deberías ver el contenedor `cont-apimopi`.
 
-### Acceso al Servicio
+### Comandos Útiles de Docker
 
-Una vez que los contenedores estén activos, el servicio estará disponible en **[http://localhost:8000](http://localhost:8000)** y la documentación de la API (si está configurada) en **[http://localhost:8000/docs](http://localhost:8000/docs)**.
+| Comando                         | Descripción                                 |
+| ------------------------------- | ------------------------------------------- |
+| `docker compose up -d`          | Inicia los servicios en segundo plano       |
+| `docker compose down`           | Detiene y elimina contenedores y redes      |
+| `docker compose restart`        | Reinicia los servicios                      |
+| `docker stop cont-apimopi`      | Detiene el contenedor de la API             |
+| `docker start cont-apimopi`     | Inicia el contenedor detenido               |
+| `docker logs -f cont-apimopi`   | Logs en tiempo real                         |
+| `docker rm cont-apimopi`        | Elimina el contenedor (debe estar detenido) |
+| `docker build -t iso-apimopi .` | Construye la imagen del backend             |
+| `docker rmi iso-apimopi`        | Elimina la imagen local                     |
+| `docker ps -a`                  | Lista todos los contenedores                |
 
-### 2.3. Comandos Útiles de Docker
+---
 
-Aquí tienes comandos esenciales para gestionar tu entorno Docker, usando el nombre de contenedor `cont-apimopi` y de imagen `iso-apimopi` como ejemplo.
+## 📝 Cookies para YouTube
 
-| Comando | Descripción |
-| :--- | :--- |
-| `docker compose up -d` | **Inicia** los servicios en segundo plano definidos en `docker-compose.yml`. |
-| `docker compose down` | **Detiene y elimina** contenedores, redes e imágenes definidos en el `docker-compose.yml`. |
-| `docker compose restart` | **Reinicia** todos los servicios definidos en el archivo de composición. |
-| `docker stop cont-apimopi` | **Detiene** la ejecución del contenedor de la API. |
-| `docker start cont-apimopi` | **Reinicia** un contenedor que ha sido detenido. |
-| `docker logs -f cont-apimopi` | Muestra los **logs** en tiempo real (`-f` por *follow*) del contenedor de la API. |
-| `docker rm cont-apimopi` | **Elimina** el contenedor de la API. **Debe estar detenido primero.** |
-| `docker build -t iso-apimopi .` | Construye o reconstruye la **imagen** del backend usando el `Dockerfile`. |
-| `docker rmi iso-apimopi` | **Elimina** la imagen localmente. **Detén los contenedores antes de eliminar la imagen.** |
-| `docker ps -a` | Muestra **todos los contenedores** (activos y detenidos). |
+Para procesar videos de YouTube:
 
------
+1. Crea el archivo **`cookies.txt`** dentro de `app/`
+2. Obtén las cookies desde tu navegador
 
-## 3\. 🚀 Despliegue
-
-Para un despliegue en un entorno de producción o *staging*, debes considerar lo siguiente:
-
-  * **Cookies para YouTube:**
-    Para procesar videos de YouTube, crea un archivo **`cookies.txt`** dentro de la carpeta `app`. Revisa la [documentación de yt-dlp](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp) para saber cómo obtener las *cookies* de tu navegador.
+Referencia oficial:  
+[https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp](https://github.com/yt-dlp/yt-dlp/wiki/FAQ#how-do-i-pass-cookies-to-yt-dlp)
