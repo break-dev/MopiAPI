@@ -30,7 +30,7 @@ class Settings(BaseSettings):
             missing.append("API_IFRAME (variable de entorno vacía)")
         if not self.ENVIRONMENT:
             missing.append("ENVIRONMENT (variable de entorno vacía)")
-        if not self.COOKIES_FILE_PATH:
+        if not self.COOKIES_FILE_PATH and self.ENVIRONMENT != "dev":
             missing.append("COOKIES_FILE_PATH (cookies.txt no encontrado)")
         if not self.DOWNLOAD_DIR_PATH:
             missing.append("DOWNLOAD_DIR_PATH (carpeta 'downloads' no encontrada)")
