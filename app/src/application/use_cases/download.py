@@ -51,11 +51,11 @@ class UC_Download:
             }
         )
         #
-        self.folder_path: str = ""  # path de la carpeta que alojara el archivo
-        self.file_path: str = ""  # path completo: folder + filename.ext
-        self.file_name: str = ""  # nombre del archivo
-        self.extension: str = ""  # extension del archivo
-        self.media_type: str = ""  # tipo de archivo
+        self.folder_path: str = ""  # path de la carpeta que alojara el archivo descargado
+        self.file_path: str = ""  # path del archivo (folder + filename.ext)
+        self.file_name: str = ""  # nombre del archivo (filename)
+        self.extension: str = ""  # extension del archivo (ext)
+        self.media_type: str = ""  # tipo de archivo (mimetype)
 
     def verify_title(self) -> bool:
         """Valida que el título sea aceptable (sin caracteres prohibidos y con longitud <= 64)."""
@@ -70,7 +70,7 @@ class UC_Download:
 
     def verify_all(self) -> str:
         result = False
-        # verificar el titulo, de ser necesario
+        # verificar el titulo, si es proporcionado
         if self.title != None:
             result = self.verify_title()
             if not result:

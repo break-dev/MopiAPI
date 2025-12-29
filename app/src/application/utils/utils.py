@@ -8,6 +8,7 @@ from urllib.parse import urlparse, parse_qs
 import base64
 
 #
+from core.settings import settings
 from src.application.utils.domains import get_domains
 
 
@@ -83,32 +84,11 @@ class Utils:
         finally:
             return file_path, file_name, extension, media_type if media_type else ""
 
-    def find_file_path(self, file_name: str) -> str:
-        """Busca un archivo en el directorio actual y sus padres."""
-        current_path = Path(__file__).resolve().parent
-        for directory in [current_path] + list(current_path.parents):
-            file_path = directory / file_name
-            if file_path.is_file():
-                return str(file_path.resolve())
-
-        return ""
-
-    def find_folder_path(self, folder_name: str) -> str:
-        """Busca una carpeta en el directorio actual y sus padres."""
-        current_path = Path(__file__).resolve().parent
-        for directory in [current_path] + list(current_path.parents):
-            folder_path = directory / folder_name
-            if folder_path.is_dir():
-                return str(folder_path.resolve())
-        return ""
-
     def create_temp_folder(self) -> str:
         """
         Crea una carpeta dentro de DOWNLOAD_DIR_PATH.
         Devuelve la ruta absoluta como string.
         """
-        from core.settings import settings
-
         folder_name = str(uuid.uuid4())
         folder_path = settings.DOWNLOAD_DIR_PATH
 
@@ -123,8 +103,6 @@ class Utils:
         Elimina una carpeta dentro de DOWNLOAD_DIR_PATH junto con todo su contenido.
         Devuelve True si se eliminó correctamente, False en caso de error o si no existe.
         """
-        from core.settings import settings
-
         base_path = Path(settings.DOWNLOAD_DIR_PATH)
         target_path = base_path / folder_name
 
@@ -136,9 +114,3 @@ class Utils:
             return True
         except Exception:
             return False
-
-    def to_base64(self, file_path: str) -> str:
-        """Convierte un archivo a base64."""
-        path = Path(file_path)
-        with path.open("rb") as f:
-            return base64.b64encode(f.read()).decode("utf-8")

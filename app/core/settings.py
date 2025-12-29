@@ -1,13 +1,18 @@
 import os
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv, find_dotenv
 
 #
-from src.application.utils.utils import Utils
 
 env_path = find_dotenv()
 if env_path:
     load_dotenv(env_path)
+else:
+    raise Exception("No se encontró el archivo .env")
+
+# ruta absoluta del directorio app
+folder_app_path = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
@@ -16,29 +21,24 @@ class Settings(BaseSettings):
         "API de MOPI, desarrollada para descargar tu música favorita."
     )
     APP_VERSION: str = "1.0"
-
     APP_CLIENT: str = os.getenv("APP_CLIENT", "")
     API_IFRAME: str = os.getenv("API_IFRAME", "")
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "")
-    COOKIES_FILE_PATH: str = Utils().find_file_path("cookies.txt")
-    DOWNLOAD_DIR_PATH: str = Utils().find_folder_path("downloads")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "dev")
+    COOKIES_FILE_PATH: str = f"{folder_app_path}/cookies.txt"
+    DOWNLOAD_DIR_PATH: str = f"{folder_app_path}/downloads"
+    LOG_FILE_PATH: str = f"{folder_app_path}/bitacora.log"
 
     def validate(self):
         """Verifica que las rutas y variables críticas estén configuradas correctamente."""
-        missing = []
         if not self.API_IFRAME:
-            missing.append("API_IFRAME (variable de entorno vacía)")
-        if not self.ENVIRONMENT:
-            missing.append("ENVIRONMENT (variable de entorno vacía)")
-        if not self.COOKIES_FILE_PATH and self.ENVIRONMENT != "dev":
-            missing.append("COOKIES_FILE_PATH (cookies.txt no encontrado)")
-        if not self.DOWNLOAD_DIR_PATH:
-            missing.append("DOWNLOAD_DIR_PATH (carpeta 'downloads' no encontrada)")
+            raise Exception("API_IFRAME (variable de entorno vacía)")
 
-        if missing:
-            raise Exception(
-                "Error al preparar Settings:\n" + "\n".join(f"- {m}" for m in missing)
-            )
+        if not Path(self.COOKIES_FILE_PATH).is_file():
+            Path(self.COOKIES_FILE_PATH).touch(exist_ok=True)
+        if not Path(self.DOWNLOAD_DIR_PATH).is_dir():
+            Path(self.DOWNLOAD_DIR_PATH).mkdir(exist_ok=True)
+        if not Path(self.LOG_FILE_PATH).is_file():
+            Path(self.LOG_FILE_PATH).touch(exist_ok=True)
 
 
 # Instancia única y validación

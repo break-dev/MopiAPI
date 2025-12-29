@@ -140,22 +140,23 @@ Verifica que esté activo:
 docker ps
 ```
 
-Deberías ver el contenedor `cont-apimopi`.
+Deberías ver el contenedor `cnt-apimopi`.
 
 ### Comandos Útiles de Docker
 
-| Comando                         | Descripción                                 |
-| ------------------------------- | ------------------------------------------- |
-| `docker compose up -d`          | Inicia los servicios en segundo plano       |
-| `docker compose down`           | Detiene y elimina contenedores y redes      |
-| `docker compose restart`        | Reinicia los servicios                      |
-| `docker stop cont-apimopi`      | Detiene el contenedor de la API             |
-| `docker start cont-apimopi`     | Inicia el contenedor detenido               |
-| `docker logs -f cont-apimopi`   | Logs en tiempo real                         |
-| `docker rm cont-apimopi`        | Elimina el contenedor (debe estar detenido) |
-| `docker build -t iso-apimopi .` | Construye la imagen del backend             |
-| `docker rmi iso-apimopi`        | Elimina la imagen local                     |
-| `docker ps -a`                  | Lista todos los contenedores                |
+| Comando                                                     | Descripción                                 |
+| ----------------------------------------------------------- | ------------------------------------------- |
+| `docker compose up -d`                                      | Inicia los servicios en segundo plano       |
+| `docker compose down`                                       | Detiene y elimina contenedores y redes      |
+| `docker compose restart`                                    | Reinicia los servicios                      |
+| `docker run -d --name cnt-apimopi -p 8080:80 iso-apimopi`   | Crea y arranca el contenedor                |
+| `docker stop cnt-apimopi`                                   | Detiene el contenedor                       |
+| `docker start cnt-apimopi`                                  | Inicia el contenedor detenido               |
+| `docker logs -f cnt-apimopi`                                | Logs en tiempo real                         |
+| `docker rm cnt-apimopi`                                     | Elimina el contenedor (debe estar detenido) |
+| `docker build -t iso-apimopi .`                             | Construye la imagen del backend             |
+| `docker rmi iso-apimopi`                                    | Elimina la imagen local                     |
+| `docker ps -a`                                              | Lista todos los contenedores                |
 
 ---
 
