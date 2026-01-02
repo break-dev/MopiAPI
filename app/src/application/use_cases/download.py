@@ -4,7 +4,6 @@ from pathlib import Path
 
 #
 from core.settings import settings
-from src.domain.enums import AllPlatforms
 from src.application.responses import (
     validResponse,
     errorResponse,
@@ -13,7 +12,7 @@ from src.application.responses import (
 )
 from src.infraestructure.dlp import DLP
 from src.application.utils.utils import Utils
-from src.domain.enums import AudioCodecs, VideoCodecs
+from src.domain.enums import AudioCodecs, AudioQuality, Mode, Platforms, VideoCodecs
 
 
 class UC_Download:
@@ -24,16 +23,16 @@ class UC_Download:
         title: Optional[str],
         platform: str,
         quality: str,
-        file_type: Literal["audio", "video"],
+        mode: str,
     ):
         self.url = url
         self.title = title
         self.platform = platform
         self.quality = quality
-        self.file_type: Literal["audio", "video"] = file_type
+        self.mode: str = mode
         #
         self.codec = (
-            VideoCodecs.MP4.value if file_type == "video" else AudioCodecs.MP3.value
+            VideoCodecs.MP4.value if mode == Mode.VIDEO.value else AudioCodecs.MP3.value
         )
         self.duration_limits = (
             {  # calidad de video
@@ -42,7 +41,7 @@ class UC_Download:
                 "1080": 8,
                 "1440": 4,
             }
-            if file_type == "video"
+            if mode == Mode.VIDEO.value
             else {  # kbps
                 "128": 16,
                 "192": 12,
@@ -51,11 +50,12 @@ class UC_Download:
             }
         )
         #
-        self.folder_path: str = ""  # path de la carpeta que alojara el archivo descargado
+        self.folder_path: str = ""  # path de la carpeta que alojara el archivo
         self.file_path: str = ""  # path del archivo (folder + filename.ext)
         self.file_name: str = ""  # nombre del archivo (filename)
         self.extension: str = ""  # extension del archivo (ext)
         self.media_type: str = ""  # tipo de archivo (mimetype)
+        self.dlp = DLP()  # instancia de DLP
 
     def verify_title(self) -> bool:
         """Valida que el título sea aceptable (sin caracteres prohibidos y con longitud <= 64)."""
@@ -81,8 +81,13 @@ class UC_Download:
         if not result:
             return "La url no es válida"
 
-        if self.platform == AllPlatforms.YOUTUBE.value:
+        if self.platform == Platforms.YOUTUBE.value:
             result = Utils().format_url_youtube(self.url)
+            if not result:
+                return "La url no es válida"
+            self.url = result
+        elif self.platform == Platforms.SOUNDCLOUD.value:
+            result = Utils().format_url_soundcloud(self.url)
             if not result:
                 return "La url no es válida"
             self.url = result
@@ -92,7 +97,7 @@ class UC_Download:
             return ""
 
         # verificar si la duracion es valida
-        result = DLP().verify_duration(self.url, self.duration_limits, self.quality)
+        result = self.dlp.verify_duration(self.url, self.duration_limits, self.quality)
         if result:
             return result
 
@@ -106,13 +111,12 @@ class UC_Download:
             self.file_name,
             self.extension,
             self.media_type,
-        ) = DLP().download(
+        ) = self.dlp.download(
             url=self.url,
             folder_path=self.folder_path,
-            file_type=self.file_type,
+            mode=self.mode,
             codec=self.codec,
             quality=self.quality,
-            # allowed_exts=[self.codec],
         )
 
         if not self.file_path:

@@ -4,7 +4,7 @@ from typing import Literal
 import httpx
 
 #
-from src.domain.enums import AllPlatforms
+from src.domain.enums import Platforms
 from src.application.responses import (
     Respuesta,
     errorResponse,
@@ -22,11 +22,9 @@ class UC_GetIframe:
         self,
         url: str,
         platform: str,
-        file_type: Literal["audio", "video"],
     ):
         self.url = url
         self.platform = platform
-        self.file_type: Literal["audio", "video"] = file_type
 
     async def execute(self) -> Respuesta:
         try:
@@ -35,8 +33,10 @@ class UC_GetIframe:
             if not result:
                 return errorResponse("La url no es válida")
 
-            if self.platform == AllPlatforms.YOUTUBE.value:
+            if self.platform == Platforms.YOUTUBE.value:
                 self.url = Utils().format_url_youtube(self.url)
+            elif self.platform == Platforms.SOUNDCLOUD.value:
+                self.url = Utils().format_url_soundcloud(self.url)
 
             # consultamos a la api de iframes
             async with httpx.AsyncClient() as client:
@@ -54,9 +54,9 @@ class UC_GetIframe:
                 )
                 return errorResponse()
 
-            if self.platform == AllPlatforms.SOUNDCLOUD.value:
+            if self.platform == Platforms.SOUNDCLOUD.value:
                 pattern = r'src="(https://(?:w{1,3}\.)?soundcloud\.com/player/[^"]+)"'
-            elif self.platform == AllPlatforms.YOUTUBE.value:
+            elif self.platform == Platforms.YOUTUBE.value:
                 pattern = (
                     r'src="(https://(?:www\.)?youtube\.com/embed/[^"?]+(?:\?[^"]*)?)"'
                 )
@@ -65,7 +65,7 @@ class UC_GetIframe:
 
             if match:
                 src_url = match.group(1)
-                if self.platform == AllPlatforms.SOUNDCLOUD.value:
+                if self.platform == Platforms.SOUNDCLOUD.value:
                     src_url += "&show_comments=false"
 
                 return validResponse(RES_GetIframe(url=src_url))

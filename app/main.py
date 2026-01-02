@@ -17,13 +17,8 @@ from src.application.responses import Respuesta, RES_FileResponse
 from src.application.utils.utils import Utils
 from src.application.use_cases.get_iframe import UC_GetIframe
 from src.application.use_cases.download import UC_Download
-from src.presentation.dtos import (
-    DTO_GetAudioIframe,
-    DTO_GetVideoIframe,
-    DTO_AudioDownload,
-    DTO_VideoDownload,
-)
-
+from src.presentation.dtos import DTO_GetIframe, DTO_AudioDownload, DTO_VideoDownload
+from src.domain.enums import Mode, AudioQuality, VideoQuality
 
 # fastapi dev app/main.py
 #
@@ -66,17 +61,10 @@ app.add_middleware(
 # ------- ENDPOINTS ------------
 
 
-@app.post("/get_audio_iframe/")
+@app.post("/get_iframe/")
 @limiter.limit("10/minute")
-async def get_audio_iframe(dto: DTO_GetAudioIframe, request: Request) -> Respuesta:
-    uc = UC_GetIframe(url=dto.url, platform=dto.platform.value, file_type="video")
-    return await uc.execute()
-
-
-@app.post("/get_video_iframe/")
-@limiter.limit("10/minute")
-async def get_video_iframe(dto: DTO_GetVideoIframe, request: Request) -> Respuesta:
-    uc = UC_GetIframe(url=dto.url, platform=dto.platform.value, file_type="video")
+async def get_iframe(dto: DTO_GetIframe, request: Request) -> Respuesta:
+    uc = UC_GetIframe(url=dto.url, platform=dto.platform.value)
     return await uc.execute()
 
 
@@ -87,8 +75,9 @@ async def download_audio(dto: DTO_AudioDownload, request: Request):
         url=dto.url,
         title=dto.title,
         platform=dto.platform.value,
-        quality=dto.quality.value,
-        file_type="audio",
+        # quality=dto.quality.value,
+        quality=AudioQuality.HIGH.value,
+        mode=Mode.AUDIO.value,
     )
     result = await uc.execute()
 
@@ -104,7 +93,7 @@ async def download_audio(dto: DTO_AudioDownload, request: Request):
     return FileResponse(
         path=data.file_path,
         filename=f"{data.file_name}.{data.extension}",
-        media_type="audio/mpeg",
+        media_type=data.media_type,
         background=background_tasks,
     )
 
@@ -116,8 +105,8 @@ async def download_video(dto: DTO_VideoDownload, request: Request):
         url=dto.url,
         title=dto.title,
         platform=dto.platform.value,
-        quality=dto.quality.value,
-        file_type="video",
+        quality=VideoQuality.HIGH.value,
+        mode=Mode.VIDEO.value,
     )
     result = await uc.execute()
 
