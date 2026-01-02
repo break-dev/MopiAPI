@@ -15,31 +15,23 @@ class VideoQuality(Enum):
     VERY_HIGH = "1440"
 
 
-class AudioCodecs(Enum):
-    MP3 = "mp3"
-    WAV = "wav"
-    FLAC = "flac"
-
-
 class VideoCodecs(Enum):
     MP4 = "mp4"
     MKV = "mkv"
     AVI = "avi"
 
 
-class AllPlatforms(Enum):
+class AudioCodecs(Enum):
+    MP3 = "mp3"
+    WAV = "wav"
+    FLAC = "flac"
+
+
+class Mode(Enum):
+    AUDIO = "audio"
+    VIDEO = "video"
+
+
+class Platforms(Enum):
     YOUTUBE = "youtube"
     SOUNDCLOUD = "soundcloud"
-
-
-class AudioPlatforms(Enum):
-    YOUTUBE = "youtube"
-    SOUNDCLOUD = "soundcloud"
-
-
-class VideoPlatforms(Enum):
-    YOUTUBE = "youtube"
-    FACEBOOK = "facebook"
-    INSTAGRAM = "instagram"
-    TWITTER = "twitter"
-    PINTEREST = "pinterest"
