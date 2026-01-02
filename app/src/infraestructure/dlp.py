@@ -163,7 +163,6 @@ class DLP:
         file_type: Literal["audio", "video"],
         codec: str,
         quality: str,
-        allowed_exts: List[str] | None = None,
     ) -> Tuple[str, str, str, str]:
         """(file_path, file_name, extension, media_type)"""
         file_path = ""
@@ -181,7 +180,7 @@ class DLP:
                 raise Exception("Tipo de archivo no válido")
 
             # verificar si se creo el archivo
-            result = Utils().find_file_temp(folder_path, allowed_exts)
+            result = Utils().find_file_temp(folder_path)
             if not result[0] or not result[1] or not result[2] or not result[3]:
                 Utils().delete_temp_folder(Path(folder_path).name)
                 raise Exception("Archivo no encontrado después de la descarga.")
