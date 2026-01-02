@@ -51,11 +51,27 @@ class Utils:
         else:
             return ""
 
-    def find_file_temp(
-        self, folder_path: str, allowed_exts: List[str] | None = None
-    ) -> Tuple[str, str, str, str]:
+    def format_url_soundcloud(self, url: str) -> str:
+        """Normaliza una URL de SoundCloud eliminando parámetros innecesarios"""
+        parsed = urlparse(url.strip())
+        netloc = parsed.netloc.lower()
+
+        if "soundcloud.com" not in netloc:
+            return ""
+
+        # /artist/track
+        path_parts = parsed.path.strip("/").split("/")
+
+        # verificamos que tenga el usuario y el track
+        if len(path_parts) >= 2:
+            clean_path = f"/{path_parts[0]}/{path_parts[1]}"
+            return f"https://soundcloud.com{clean_path}"
+
+        return ""
+
+    def find_file_temp(self, folder_path: str) -> Tuple[str, str, str, str]:
         """
-        Busca un archivo dentro del directorio y filtra por extensiones permitidas.
+        Busca un archivo dentro del directorio.
         Devuelve:
             (file_path, file_name, extension, media_type)
         """
@@ -71,9 +87,6 @@ class Utils:
             for item in folder.iterdir():
                 if item.is_file():
                     ext = item.suffix.lower().replace(".", "")
-
-                    if allowed_exts and ext not in allowed_exts:
-                        continue  # descartar archivos basura
 
                     file_path = str(item.resolve())
                     file_name = item.stem
