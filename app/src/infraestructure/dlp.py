@@ -160,7 +160,7 @@ class DLP:
         self,
         url: str,
         folder_path: str,
-        file_type: Literal["audio", "video"],
+        mode: Literal["audio", "video"],
         codec: str,
         quality: str,
     ) -> Tuple[str, str, str, str]:
@@ -170,10 +170,10 @@ class DLP:
         extension = ""
         media_type = ""
         try:
-            if file_type == "audio":
+            if mode == "audio":
                 with yt_dlp.YoutubeDL(self.get_opts_for_download_audio(folder_path=folder_path, codec=codec, quality=quality)) as ydl:  # type: ignore
                     ydl.download(url)
-            elif file_type == "video":
+            elif mode == "video":
                 with yt_dlp.YoutubeDL(self.get_opts_for_download_video(folder_path=folder_path, codec=codec)) as ydl:  # type: ignore
                     ydl.download(url)
             else:
