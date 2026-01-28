@@ -1,6 +1,4 @@
 import re
-import requests
-from typing import Literal
 import httpx
 
 #

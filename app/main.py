@@ -63,14 +63,14 @@ app.add_middleware(
 
 
 @app.post("/get_iframe/")
-@limiter.limit("10/minute")
+@limiter.limit("20/minute")
 async def get_iframe(dto: DTO_GetIframe, request: Request) -> Respuesta:
     uc = UC_GetIframe(url=dto.url, platform=dto.platform.value)
     return await uc.execute()
 
 
 @app.post("/download_audio/")
-@limiter.limit("4/minute")
+@limiter.limit("6/minute")
 async def download_audio(dto: DTO_AudioDownload, request: Request):
     uc = UC_Download(
         url=dto.url,
@@ -100,7 +100,7 @@ async def download_audio(dto: DTO_AudioDownload, request: Request):
 
 
 @app.post("/download_video/")
-@limiter.limit("4/minute")
+@limiter.limit("6/minute")
 async def download_video(dto: DTO_VideoDownload, request: Request):
     uc = UC_Download(
         url=dto.url,

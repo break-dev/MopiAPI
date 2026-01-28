@@ -1,5 +1,5 @@
 import re
-from typing import Optional, Literal
+from typing import Optional
 from pathlib import Path
 
 #
@@ -10,9 +10,9 @@ from src.application.responses import (
     Respuesta,
     RES_FileResponse,
 )
-from src.infraestructure.dlp import DLP
+from src.infraestructure.downloader import Downloader
 from src.application.utils.utils import Utils
-from src.domain.enums import AudioCodecs, AudioQuality, Mode, Platforms, VideoCodecs
+from src.domain.enums import AudioCodecs, Mode, Platforms, VideoCodecs
 
 
 class UC_Download:
@@ -55,7 +55,6 @@ class UC_Download:
         self.file_name: str = ""  # nombre del archivo (filename)
         self.extension: str = ""  # extension del archivo (ext)
         self.media_type: str = ""  # tipo de archivo (mimetype)
-        self.dlp = DLP()  # instancia de DLP
 
     def verify_title(self) -> bool:
         """Valida que el título sea aceptable (sin caracteres prohibidos y con longitud <= 64)."""
@@ -97,7 +96,9 @@ class UC_Download:
             return ""
 
         # verificar si la duracion es valida
-        result = self.dlp.verify_duration(self.url, self.duration_limits, self.quality)
+        result = Downloader().verify_duration(
+            self.url, self.duration_limits, self.quality
+        )
         if result:
             return result
 
@@ -111,7 +112,7 @@ class UC_Download:
             self.file_name,
             self.extension,
             self.media_type,
-        ) = self.dlp.download(
+        ) = Downloader().download(
             url=self.url,
             folder_path=self.folder_path,
             mode=self.mode,

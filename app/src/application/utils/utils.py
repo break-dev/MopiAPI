@@ -1,11 +1,10 @@
-from typing import Tuple, List
+from typing import Tuple
 from pathlib import Path
 import mimetypes
 import re
 import shutil
 import uuid
 from urllib.parse import urlparse, parse_qs
-import base64
 
 #
 from core.settings import settings
