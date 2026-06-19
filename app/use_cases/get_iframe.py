@@ -2,16 +2,12 @@ import re
 import httpx
 
 #
-from src.domain.enums import Platforms
-from src.application.responses import (
-    Respuesta,
-    errorResponse,
-    validResponse,
-    RES_GetIframe,
-)
-from src.application.utils.utils import Utils
+from shared.literals import Platforms
+from use_cases._responses import RES_GetIframe
+from shared.utils import Utils
 from core.logger import logger
 from core.settings import settings
+from shared._response import ApiResponse, error_response, valid_response
 
 
 class UC_GetIframe:
@@ -19,21 +15,21 @@ class UC_GetIframe:
     def __init__(
         self,
         url: str,
-        platform: str,
+        platform: Platforms,
     ):
-        self.url = url
-        self.platform = platform
+        self.url: str = url
+        self.platform: Platforms = platform
 
-    async def execute(self) -> Respuesta:
+    async def execute(self) -> ApiResponse:
         try:
             # verificar dominio
             result = Utils().verify_domain(self.url, self.platform)
             if not result:
-                return errorResponse("La url no es válida")
+                return error_response("La url no es válida")
 
-            if self.platform == Platforms.YOUTUBE.value:
+            if self.platform == "youtube":
                 self.url = Utils().format_url_youtube(self.url)
-            elif self.platform == Platforms.SOUNDCLOUD.value:
+            elif self.platform == "soundcloud":
                 self.url = Utils().format_url_soundcloud(self.url)
 
             # consultamos a la api de iframes
@@ -41,7 +37,7 @@ class UC_GetIframe:
                 result = await client.get(settings.API_IFRAME, params={"url": self.url})
             if result.status_code != 200:
                 logger.error(f"Error al contactar con la API: {settings.API_IFRAME}")
-                return errorResponse()
+                return error_response()
 
             # buscamos el url del iframe
             code = result.json().get("code", "")
@@ -50,11 +46,11 @@ class UC_GetIframe:
                 logger.error(
                     f"No se encontró el campo CODE para {self.platform}: {self.url}"
                 )
-                return errorResponse()
+                return error_response()
 
-            if self.platform == Platforms.SOUNDCLOUD.value:
+            if self.platform == "soundcloud":
                 pattern = r'src="(https://(?:w{1,3}\.)?soundcloud\.com/player/[^"]+)"'
-            elif self.platform == Platforms.YOUTUBE.value:
+            elif self.platform == "youtube":
                 pattern = (
                     r'src="(https://(?:www\.)?youtube\.com/embed/[^"?]+(?:\?[^"]*)?)"'
                 )
@@ -63,16 +59,16 @@ class UC_GetIframe:
 
             if match:
                 src_url = match.group(1)
-                if self.platform == Platforms.SOUNDCLOUD.value:
+                if self.platform == "soundcloud":
                     src_url += "&show_comments=false"
 
-                return validResponse(RES_GetIframe(url=src_url))
+                return valid_response(RES_GetIframe(url=src_url))
             else:
                 logger.warning(
                     f"No se encontró iframe para {self.platform}: {self.url}"
                 )
-                return errorResponse()
+                return error_response()
 
         except Exception as e:
             logger.error(f"Error en UC_GetIframe ({self.platform}): {e}")
-            return errorResponse()
+            return error_response()

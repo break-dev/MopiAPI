@@ -12,13 +12,14 @@ mimetypes.init()
 
 #
 from core.settings import settings
-from src.presentation.filter_exception import filter_exception
-from src.application.responses import Respuesta, RES_FileResponse
-from src.application.utils.utils import Utils
-from src.application.use_cases.get_iframe import UC_GetIframe
-from src.application.use_cases.download import UC_Download
-from src.presentation.dtos import DTO_GetIframe, DTO_AudioDownload, DTO_VideoDownload
-from src.domain.enums import Mode, AudioQuality, VideoQuality
+from presentation.filter_exception import filter_exception
+from shared.utils import Utils
+from use_cases._responses import RES_FileResponse, RES_GetIframe
+from use_cases.get_iframe import UC_GetIframe
+from use_cases.download import UC_Download
+from presentation.dtos import DTO_GetIframe, DTO_Download
+from shared.literals import DownloadMode
+from shared._response import ApiResponse
 
 # fastapi dev app/main.py
 #
@@ -64,23 +65,21 @@ app.add_middleware(
 
 @app.post("/get_iframe/")
 @limiter.limit("20/minute")
-async def get_iframe(dto: DTO_GetIframe, request: Request) -> Respuesta:
-    uc = UC_GetIframe(url=dto.url, platform=dto.platform.value)
+async def get_iframe(dto: DTO_GetIframe, request: Request) -> ApiResponse:
+    uc = UC_GetIframe(url=dto.url, platform=dto.platform)
     return await uc.execute()
 
 
-@app.post("/download_audio/")
+@app.post("/download/")
 @limiter.limit("6/minute")
-async def download_audio(dto: DTO_AudioDownload, request: Request):
+async def download(dto: DTO_Download, request: Request):
     uc = UC_Download(
         url=dto.url,
         title=dto.title,
-        platform=dto.platform.value,
-        # quality=dto.quality.value,
-        quality=AudioQuality.HIGH.value,
-        mode=Mode.AUDIO.value,
+        platform=dto.platform,
+        mode=dto.mode,
     )
-    result = await uc.execute()
+    result: ApiResponse = await uc.execute()
 
     if not result.success or not result.data:
         return result
@@ -89,36 +88,7 @@ async def download_audio(dto: DTO_AudioDownload, request: Request):
 
     # programar eliminacion de la carpeta
     background_tasks = BackgroundTasks()
-    background_tasks.add_task(Utils().delete_temp_folder, data.folder_name)
-
-    return FileResponse(
-        path=data.file_path,
-        filename=f"{data.file_name}.{data.extension}",
-        media_type=data.media_type,
-        background=background_tasks,
-    )
-
-
-@app.post("/download_video/")
-@limiter.limit("6/minute")
-async def download_video(dto: DTO_VideoDownload, request: Request):
-    uc = UC_Download(
-        url=dto.url,
-        title=dto.title,
-        platform=dto.platform.value,
-        quality=VideoQuality.HIGH.value,
-        mode=Mode.VIDEO.value,
-    )
-    result = await uc.execute()
-
-    if not result.success or not result.data:
-        return result
-
-    data: RES_FileResponse = result.data  # type: ignore
-
-    # programar eliminacion de la carpeta
-    background_tasks = BackgroundTasks()
-    background_tasks.add_task(Utils().delete_temp_folder, data.folder_name)
+    background_tasks.add_task(Utils().delete_temp_folder, data.file_path.parent)
 
     return FileResponse(
         path=data.file_path,

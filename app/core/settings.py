@@ -3,44 +3,42 @@ from pathlib import Path
 from pydantic_settings import BaseSettings
 from dotenv import load_dotenv, find_dotenv
 
-#
-
+# Cargar .env
 env_path = find_dotenv()
-if env_path:
-    load_dotenv(env_path)
-else:
+if not env_path:
     raise Exception("No se encontró el archivo .env")
+load_dotenv(env_path)
 
-# ruta absoluta del directorio app
-folder_app_path = Path(__file__).resolve().parent.parent
+# Ruta base
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 class Settings(BaseSettings):
+    # Pydantic ya tiene los valores de .env
     APP_NAME: str = "MOPI"
     APP_DESCRIPTION: str = (
         "API de MOPI, desarrollada para descargar tu música favorita."
     )
     APP_VERSION: str = "1.0"
-    APP_CLIENT: str = os.getenv("APP_CLIENT", "")
-    API_IFRAME: str = os.getenv("API_IFRAME", "")
-    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "dev")
-    COOKIES_FILE_PATH: str = f"{folder_app_path}/cookies.txt"
-    DOWNLOAD_DIR_PATH: str = f"{folder_app_path}/downloads"
-    LOG_FILE_PATH: str = f"{folder_app_path}/bitacora.log"
+    APP_CLIENT: str = ""
+    API_IFRAME: str = ""
+    ENVIRONMENT: str = "dev"
+
+    # Rutas
+    COOKIES_FILE_PATH: Path = BASE_DIR / "cookies.txt"
+    DOWNLOAD_DIR_PATH: Path = BASE_DIR / "downloads"
+    LOG_FILE_PATH: Path = BASE_DIR / "bitacora.log"
 
     def validate(self):
-        """Verifica que las rutas y variables críticas estén configuradas correctamente."""
+        """Verifica y crea archivos/carpetas."""
         if not self.API_IFRAME:
-            raise Exception("API_IFRAME (variable de entorno vacía)")
+            raise ValueError("Falta API_IFRAME en el .env")
 
-        if not Path(self.COOKIES_FILE_PATH).is_file():
-            Path(self.COOKIES_FILE_PATH).touch(exist_ok=True)
-        if not Path(self.DOWNLOAD_DIR_PATH).is_dir():
-            Path(self.DOWNLOAD_DIR_PATH).mkdir(exist_ok=True)
-        if not Path(self.LOG_FILE_PATH).is_file():
-            Path(self.LOG_FILE_PATH).touch(exist_ok=True)
+        self.COOKIES_FILE_PATH.touch(exist_ok=True)
+        self.DOWNLOAD_DIR_PATH.mkdir(exist_ok=True, parents=True)
+        self.LOG_FILE_PATH.touch(exist_ok=True)
 
 
-# Instancia única y validación
+# Instancia
 settings = Settings()
 settings.validate()
